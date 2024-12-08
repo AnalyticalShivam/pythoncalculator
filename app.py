@@ -7,7 +7,7 @@ app = Flask(__name__)
 nest_asyncio.apply()
 
 # Allow CORS for your frontend (adjust origin if needed)
-CORS(app, resources={r"/calculate": {"origins": "https://pythoncalculator-9icg94fpm3t6xipjt3ctqj.streamlit.app/"}})  # Adjust origin as needed
+CORS(app, resources={r"/calculate": {"origins": "http://localhost:63342"}})  # Adjust origin as needed
 
 def calculate_loan_details(loan_amount, rate_of_interest, loan_tenure):
     # Convert annual interest rate to monthly and decimal
