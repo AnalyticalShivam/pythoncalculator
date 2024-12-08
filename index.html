@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator with Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS for styling -->
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            padding: 50px;
+            margin: 0;
+            color: #333;
+        }
+
+        h1 {
+            color: #2C3E50;
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Styling for the form */
+        label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2C3E50;
+            margin-top: 20px;
+            display: block;
+            margin-bottom: 5px;
+        }
+input[type="range"]{
+width: 100%;
+            padding: 0px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;}
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+
+        /* Range slider styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 5px;
+            border-radius: 5px;
+            background: #ddd;
+            transition: background 0.3s ease-in-out;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+
+        input[type="range"]:hover::-webkit-slider-thumb {
+            background: #45a049;
+        }
+
+        .slider-output {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2C3E50;
+            margin-top: 5px;
+        }
+
+        /* Button Styles */
+        button {
+            padding: 15px 25px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Result Styling */
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #results p {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #2C3E50;
+        }
+
+        /* Chart styling */
+        #loanChart {
+            margin-top: 30px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 600px;
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .slider-label {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Loan Calculator</h1>
+
+        <!-- Loan Amount Slider and Input -->
+        <label for="loanAmount">Loan Amount: ₹</label>
+        <input type="number" id="loanAmountInput" name="loanAmount" min="10000" max="1000000" value="500000">
+        <input type="range" id="loanAmountSlider" name="loanAmountSlider" min="10000" max="1000000" value="500000">
+        <div class="slider-output" id="loanAmountOutput">500000</div>
+
+        <!-- Interest Rate Slider and Input -->
+        <label for="interestRate">Interest Rate: </label>
+        <input type="number" id="interestRateInput" name="interestRate" min="1" max="20" step="0.1" value="7">
+        <input type="range" id="interestRateSlider" name="interestRateSlider" min="1" max="20" step="0.1" value="7">
+        <div class="slider-output" id="interestRateOutput">7</div>%
+
+        <!-- Loan Tenure Slider and Input -->
+        <label for="loanTenure">Loan Tenure: </label>
+        <input type="number" id="loanTenureInput" name="loanTenure" min="1" max="30" value="10">
+        <input type="range" id="loanTenureSlider" name="loanTenureSlider" min="1" max="30" value="10">
+        <div class="slider-output" id="loanTenureOutput">10</div> years
+
+        <button onclick="calculateLoan()">Calculate</button>
+
+        <div id="results">
+            <p>Monthly EMI: ₹<span id="monthlyEmi"></span></p>
+            <p>Total Interest: ₹<span id="totalInterest"></span></p>
+            <p>Total Payment: ₹<span id="totalPayment"></span></p>
+        </div>
+
+        <!-- Canvas for the doughnut chart -->
+        <canvas id="loanChart" width="400" height="400"></canvas>
+    </div>
+
+    <script>
+        // Sync input with slider for Loan Amount
+        const loanAmountInput = document.getElementById('loanAmountInput');
+        const loanAmountSlider = document.getElementById('loanAmountSlider');
+        const loanAmountOutput = document.getElementById('loanAmountOutput');
+
+        loanAmountInput.addEventListener('input', function() {
+            loanAmountSlider.value = loanAmountInput.value;
+            loanAmountOutput.textContent = loanAmountInput.value;
+        });
+
+        loanAmountSlider.addEventListener('input', function() {
+            loanAmountInput.value = loanAmountSlider.value;
+            loanAmountOutput.textContent = loanAmountSlider.value;
+        });
+
+        // Sync input with slider for Interest Rate
+        const interestRateInput = document.getElementById('interestRateInput');
+        const interestRateSlider = document.getElementById('interestRateSlider');
+        const interestRateOutput = document.getElementById('interestRateOutput');
+
+        interestRateInput.addEventListener('input', function() {
+            interestRateSlider.value = interestRateInput.value;
+            interestRateOutput.textContent = interestRateInput.value;
+        });
+
+        interestRateSlider.addEventListener('input', function() {
+            interestRateInput.value = interestRateSlider.value;
+            interestRateOutput.textContent = interestRateSlider.value;
+        });
+
+        // Sync input with slider for Loan Tenure
+        const loanTenureInput = document.getElementById('loanTenureInput');
+        const loanTenureSlider = document.getElementById('loanTenureSlider');
+        const loanTenureOutput = document.getElementById('loanTenureOutput');
+
+        loanTenureInput.addEventListener('input', function() {
+            loanTenureSlider.value = loanTenureInput.value;
+            loanTenureOutput.textContent = loanTenureInput.value;
+        });
+
+        loanTenureSlider.addEventListener('input', function() {
+            loanTenureInput.value = loanTenureSlider.value;
+            loanTenureOutput.textContent = loanTenureSlider.value;
+        });
+
+        function calculateLoan() {
+            // Get the values from the inputs and sliders
+            const loanAmount = parseFloat(loanAmountInput.value);
+            const interestRate = parseFloat(interestRateInput.value);
+            const loanTenure = parseFloat(loanTenureInput.value);
+
+            // Validate input fields
+            if (isNaN(loanAmount) || isNaN(interestRate) || isNaN(loanTenure)) {
+                alert("Please enter valid numbers for all fields.");
+                return;
+            }
+
+            // Prepare the data to send in the request
+            const data = {
+                loan_amount: loanAmount,
+                rate_of_interest: interestRate,
+                loan_tenure: loanTenure
+            };
+
+            // Send a POST request to the Flask app
+            fetch('http://127.0.0.1:5000/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the results
+                const monthlyEmi = data.monthly_emi;
+                const totalInterest = data.total_interest;
+                const totalPayment = data.total_payment;
+
+                document.getElementById('monthlyEmi').textContent = monthlyEmi;
+                document.getElementById('totalInterest').textContent = totalInterest;
+                document.getElementById('totalPayment').textContent = totalPayment;
+
+                // Create the doughnut chart
+                const ctx = document.getElementById('loanChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Total Loan', 'Total Interest'],
+                        datasets: [{
+                            label: 'Loan Breakdown',
+                            data: [totalPayment, totalInterest],
+                            backgroundColor: ['#3498db', '#e74c3c'],
+                            borderColor: ['#2980b9', '#c0392b'],
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
